@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_localizations: # Support multilingue
-  
+
     sdk: flutter
   dio: ^5.4.0 # Requêtes API vers FastAPI
   camera: ^0.10.5 # Capture d’image via caméra
@@ -53,6 +53,9 @@ dependencies:
   flutter_markdown: ^0.6.0 # Markdown pour termes/guides
   shared_preferences: ^2.2.0
   flutter_sound: ^9.2.13
+  # dji: ^1.0.13 # DJI SDK pour drones
+  
+  
   
 
 
@@ -83,6 +86,8 @@ flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
+  generate: true
+
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

@@ -22,21 +22,27 @@ class ForumScreen extends StatefulWidget {
 class _ForumScreenState extends State<ForumScreen> {
   final TextEditingController _postController = TextEditingController();
   final Map<int, TextEditingController> _commentControllers = {};
+  final Map<String, TextEditingController> _editCommentControllers = {};
+  final Map<int, TextEditingController> _editPostControllers = {};
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
   FlutterSoundRecorder? _recorder;
   FlutterSoundPlayer? _player;
   String? _audioPath;
   bool _isRecording = false;
-  bool _isPlaying = false;
+  Map<int, bool> _isPlaying = {};
+  Map<int, bool> _isLiked = {};
 
   @override
   void initState() {
     super.initState();
     _recorder = FlutterSoundRecorder();
     _player = FlutterSoundPlayer();
+    _isPlaying = {};
+    _isLiked = {};
     _initRecorderAndPlayer();
     _loadPosts();
+    print('InitState executed at ${DateTime.now()}');
   }
 
   Future<void> _initRecorderAndPlayer() async {
@@ -44,28 +50,72 @@ class _ForumScreenState extends State<ForumScreen> {
     await _player!.openPlayer();
     final directory = await getTemporaryDirectory();
     _audioPath = '${directory.path}/temp_audio.aac';
+    print('Recorder and player initialized, audioPath: $_audioPath');
   }
 
   Future<void> _loadPosts() async {
     final prefs = await SharedPreferences.getInstance();
     final postsJson = prefs.getString('communityPosts');
+    print('Loading posts, postsJson: $postsJson');
     if (postsJson != null) {
-      setState(() {
-        communityPosts = List<Map<String, dynamic>>.from(jsonDecode(postsJson));
-      });
+      try {
+        final decodedPosts = jsonDecode(postsJson) as List;
+        setState(() {
+          communityPosts = decodedPosts.map((post) => Map<String, dynamic>.from(post)).toList();
+          _isLiked = {};
+          _isPlaying = {};
+          for (int i = 0; i < communityPosts.length; i++) {
+            _isLiked[i] = false;
+            _isPlaying[i] = false;
+          }
+        });
+        print('Posts loaded successfully: $communityPosts');
+      } catch (e) {
+        print('Error decoding posts JSON: $e');
+        communityPosts = [
+          {
+            'username': 'Amadou Traoré',
+            'message': 'J’ai remarqué des taches brunes sur mes oignons. Quelqu’un a une idée de ce problème ?',
+            'imagePath': 'assets/images/sample_onion.jpg',
+            'profilePicture': 'assets/images/amadou_profile.jpg',
+            'likes': 15,
+            'comments': 12,
+            'shares': 0,
+            'commentList': [],
+            'audioPath': null,
+            'reshareComment': null,
+            'resharedBy': null,
+          },
+          {
+            'username': 'Azi Dao',
+            'message': 'Je teste un nouveau conseil pour la culture des oignons pendant la saison sèche...',
+            'imagePath': null,
+            'profilePicture': 'assets/images/azi_profile.jpg',
+            'likes': 8,
+            'comments': 5,
+            'shares': 0,
+            'commentList': [],
+            'audioPath': null,
+            'reshareComment': null,
+            'resharedBy': null,
+          },
+        ];
+        await _savePosts();
+      }
     } else {
-      // Initialiser avec des données par défaut si aucune donnée n'est sauvegardée
       communityPosts = [
         {
           'username': 'Amadou Traoré',
-          'message': 'J’ai remarqué des taches brunes sur mes oignons. Quelqu’un a une idée de ce problème ? Voici une description plus longue pour tester : j’ai planté mes oignons il y a trois mois, et récemment, j’ai observé des taches brunes sur les feuilles. Cela semble s’étendre rapidement, et je suis inquiet pour ma récolte. Avez-vous des conseils pour traiter ce problème ou identifier la cause ?',
+          'message': 'J’ai remarqué des taches brunes sur mes oignons. Quelqu’un a une idée de ce problème ?',
           'imagePath': 'assets/images/sample_onion.jpg',
           'profilePicture': 'assets/images/amadou_profile.jpg',
           'likes': 15,
           'comments': 12,
           'shares': 0,
-          'commentList': [], // Liste pour stocker les commentaires
+          'commentList': [],
           'audioPath': null,
+          'reshareComment': null,
+          'resharedBy': null,
         },
         {
           'username': 'Azi Dao',
@@ -77,17 +127,23 @@ class _ForumScreenState extends State<ForumScreen> {
           'shares': 0,
           'commentList': [],
           'audioPath': null,
+          'reshareComment': null,
+          'resharedBy': null,
         },
       ];
       await _savePosts();
+      print('No saved posts, initialized with default data: $communityPosts');
     }
-    print('communityPosts au démarrage de ForumScreen : $communityPosts');
   }
 
   Future<void> _savePosts() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('communityPosts', jsonEncode(communityPosts));
-    print('Publications sauvegardées : $communityPosts');
+    try {
+      await prefs.setString('communityPosts', jsonEncode(communityPosts));
+      print('Posts saved successfully: $communityPosts');
+    } catch (e) {
+      print('Error saving posts: $e');
+    }
   }
 
   Future<bool> _requestMicrophonePermission() async {
@@ -114,8 +170,22 @@ class _ForumScreenState extends State<ForumScreen> {
           'shares': 0,
           'commentList': [],
           'audioPath': _audioPath != null && _audioPath!.isNotEmpty ? _audioPath : null,
+          'reshareComment': null,
+          'resharedBy': null,
         });
-        print('communityPosts après ajout : $communityPosts');
+        // Réorganiser les index des maps après insertion
+        final newIsLiked = <int, bool>{};
+        final newIsPlaying = <int, bool>{};
+        newIsLiked[0] = false;
+        newIsPlaying[0] = false;
+        for (int i = 1; i <= communityPosts.length - 1; i++) {
+          newIsLiked[i] = _isLiked[i - 1] ?? false;
+          newIsPlaying[i] = _isPlaying[i - 1] ?? false;
+        }
+        _isLiked = newIsLiked;
+        _isPlaying = newIsPlaying;
+        _editPostControllers[0] = TextEditingController(text: _postController.text);
+        print('New post added: ${communityPosts[0]}');
       });
       _postController.clear();
       setState(() {
@@ -126,7 +196,21 @@ class _ForumScreenState extends State<ForumScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Publication ajoutée !')),
       );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez ajouter du texte, une image ou un enregistrement vocal.')),
+      );
     }
+  }
+
+  void _cancelImage() {
+    setState(() {
+      _selectedImage = null;
+      print('Image selection cancelled');
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Image annulée !')),
+    );
   }
 
   void _pickImage() async {
@@ -136,6 +220,7 @@ class _ForumScreenState extends State<ForumScreen> {
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
+          print('Image selected: ${_selectedImage!.path}');
         });
       }
     } else if (status.isPermanentlyDenied) {
@@ -154,6 +239,7 @@ class _ForumScreenState extends State<ForumScreen> {
         setState(() {
           _isRecording = true;
         });
+        print('Recording started');
       } catch (e) {
         print('Erreur lors du démarrage de l’enregistrement : $e');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -176,6 +262,7 @@ class _ForumScreenState extends State<ForumScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Message vocal enregistré !')),
       );
+      print('Recording stopped, audioPath: $_audioPath');
     } catch (e) {
       print('Erreur lors de l’arrêt de l’enregistrement : $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -184,19 +271,21 @@ class _ForumScreenState extends State<ForumScreen> {
     }
   }
 
-  void _playAudio(String audioPath) async {
+  void _playAudio(int index, String audioPath) async {
     try {
-      if (_isPlaying) {
+      bool isCurrentlyPlaying = _isPlaying[index] ?? false;
+      if (isCurrentlyPlaying) {
         await _player!.stopPlayer();
         setState(() {
-          _isPlaying = false;
+          _isPlaying[index] = false;
         });
       } else {
         await _player!.startPlayer(fromURI: audioPath);
         setState(() {
-          _isPlaying = true;
+          _isPlaying[index] = true;
         });
       }
+      print('Audio playback toggled for index $index, isPlaying: ${_isPlaying[index]}');
     } catch (e) {
       print('Erreur lors de la lecture de l’audio : $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -207,7 +296,15 @@ class _ForumScreenState extends State<ForumScreen> {
 
   void _likePost(int index) {
     setState(() {
-      communityPosts[index]['likes'] = (communityPosts[index]['likes'] ?? 0) + 1;
+      bool isCurrentlyLiked = _isLiked[index] ?? false;
+      if (isCurrentlyLiked) {
+        communityPosts[index]['likes'] = (communityPosts[index]['likes'] ?? 0) - 1;
+        _isLiked[index] = false;
+      } else {
+        communityPosts[index]['likes'] = (communityPosts[index]['likes'] ?? 0) + 1;
+        _isLiked[index] = true;
+      }
+      print('Liked post at index $index, new likes: ${communityPosts[index]['likes']}, isLiked: ${_isLiked[index]}');
     });
     _savePosts();
   }
@@ -221,19 +318,171 @@ class _ForumScreenState extends State<ForumScreen> {
           {'username': 'Utilisateur', 'comment': controller.text}
         ];
         communityPosts[index]['comments'] = (communityPosts[index]['comments'] ?? 0) + 1;
+        _commentControllers[index] = TextEditingController();
+        print('Comment added to post $index: ${communityPosts[index]['commentList']}');
       });
-      controller.clear();
       _savePosts();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez entrer un commentaire.')),
+      );
     }
   }
 
   void _sharePost(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final TextEditingController _commentController = TextEditingController();
+        return AlertDialog(
+          title: const Text('Republier'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Ajouter un commentaire (optionnel) :'),
+              TextField(
+                controller: _commentController,
+                decoration: const InputDecoration(hintText: 'Votre commentaire...'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  final postToShare = Map<String, dynamic>.from(communityPosts[index]);
+                  postToShare['shares'] = (postToShare['shares'] ?? 0) + 1;
+                  postToShare['resharedBy'] = 'Utilisateur';
+                  postToShare['reshareComment'] = _commentController.text.isNotEmpty ? _commentController.text : null;
+                  communityPosts.insert(0, postToShare);
+                  // Réorganiser les index des maps après insertion
+                  final newIsLiked = <int, bool>{};
+                  final newIsPlaying = <int, bool>{};
+                  newIsLiked[0] = false;
+                  newIsPlaying[0] = false;
+                  for (int i = 1; i <= communityPosts.length - 1; i++) {
+                    newIsLiked[i] = _isLiked[i - 1] ?? false;
+                    newIsPlaying[i] = _isPlaying[i - 1] ?? false;
+                  }
+                  _isLiked = newIsLiked;
+                  _isPlaying = newIsPlaying;
+                  _editPostControllers[0] = TextEditingController(text: postToShare['message']);
+                  print('Shared post at index $index, new shares: ${postToShare['shares']}, new post list: $communityPosts');
+                });
+                _savePosts();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Publication republiée !')),
+                );
+              },
+              child: const Text('Republier'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editPost(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        _editPostControllers[index] ??= TextEditingController(text: communityPosts[index]['message']);
+        return AlertDialog(
+          title: const Text('Modifier la publication'),
+          content: TextField(
+            controller: _editPostControllers[index],
+            maxLines: 3,
+            decoration: const InputDecoration(hintText: 'Modifier le message...'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  communityPosts[index]['message'] = _editPostControllers[index]!.text;
+                });
+                _savePosts();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Publication modifiée !')),
+                );
+              },
+              child: const Text('Sauvegarder'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deletePost(int index) {
     setState(() {
-      communityPosts[index]['shares'] = (communityPosts[index]['shares'] ?? 0) + 1;
+      communityPosts.removeAt(index);
+      // Supprimer l'entrée correspondante et réorganiser les index
+      final newIsLiked = <int, bool>{};
+      final newIsPlaying = <int, bool>{};
+      for (int i = 0; i < communityPosts.length; i++) {
+        newIsLiked[i] = _isLiked[i + (i >= index ? 1 : 0)] ?? false;
+        newIsPlaying[i] = _isPlaying[i + (i >= index ? 1 : 0)] ?? false;
+      }
+      _isLiked = newIsLiked;
+      _isPlaying = newIsPlaying;
+      _commentControllers.remove(index);
+      _editPostControllers.remove(index);
+      _savePosts();
+      print('Post deleted at index $index, new list: $communityPosts');
     });
-    _savePosts();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Publication republiée !')),
+      const SnackBar(content: Text('Publication supprimée !')),
+    );
+  }
+
+  void _editComment(int index, int commentIndex) {
+    final key = '$index-$commentIndex';
+    final comment = (communityPosts[index]['commentList'] as List)[commentIndex];
+    _editCommentControllers[key] ??= TextEditingController(text: comment['comment']);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Modifier le commentaire'),
+          content: TextField(
+            controller: _editCommentControllers[key],
+            decoration: const InputDecoration(hintText: 'Modifier le commentaire...'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  (communityPosts[index]['commentList'] as List)[commentIndex]['comment'] = _editCommentControllers[key]!.text;
+                });
+                _savePosts();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Commentaire modifié !')),
+                );
+              },
+              child: const Text('Sauvegarder'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -241,6 +490,8 @@ class _ForumScreenState extends State<ForumScreen> {
   void dispose() {
     _postController.dispose();
     _commentControllers.forEach((_, controller) => controller.dispose());
+    _editPostControllers.forEach((_, controller) => controller.dispose());
+    _editCommentControllers.forEach((_, controller) => controller.dispose());
     _recorder!.closeRecorder();
     _player!.closePlayer();
     super.dispose();
@@ -248,7 +499,7 @@ class _ForumScreenState extends State<ForumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('Construction de ForumScreen, communityPosts : $communityPosts');
+    print('Building ForumScreen at ${DateTime.now()}, communityPosts: $communityPosts');
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
@@ -356,11 +607,24 @@ class _ForumScreenState extends State<ForumScreen> {
               ),
               if (_selectedImage != null) ...[
                 const SizedBox(height: 10),
-                Image.file(
-                  _selectedImage!,
-                  height: 100,
-                  width: 100,
-                  fit: BoxFit.cover,
+                Row(
+                  children: [
+                    Image.file(
+                      _selectedImage!,
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        print('Error loading selected image: $error');
+                        return const Text('Erreur lors du chargement de l’image');
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.cancel, color: Colors.red),
+                      onPressed: _cancelImage,
+                      tooltip: 'Annuler l’image',
+                    ),
+                  ],
                 ),
               ],
               const SizedBox(height: 20),
@@ -379,7 +643,8 @@ class _ForumScreenState extends State<ForumScreen> {
                   itemBuilder: (context, index) {
                     final post = communityPosts[index];
                     _commentControllers[index] ??= TextEditingController();
-                    print('Affichage de la publication $index : $post');
+                    _editPostControllers[index] ??= TextEditingController(text: post['message']);
+                    print('Rendering post at index $index: $post');
                     return Card(
                       elevation: 4,
                       shape: RoundedRectangleBorder(
@@ -391,6 +656,41 @@ class _ForumScreenState extends State<ForumScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (post['resharedBy'] != null) ...[
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundImage: const AssetImage('assets/images/user_profile.jpg'),
+                                    onBackgroundImageError: (exception, stackTrace) {
+                                      print('Erreur de chargement de l’image de profil republié : $exception');
+                                    },
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '${post['resharedBy']} (republié)',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (post['reshareComment'] != null) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${post['resharedBy']}: ${post['reshareComment']}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 8),
+                            ],
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -400,7 +700,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                     post['profilePicture'] ?? 'assets/images/default_profile.jpg',
                                   ),
                                   onBackgroundImageError: (exception, stackTrace) {
-                                    print('Erreur de chargement de l’image de profil : $exception');
+                                    print('Erreur de chargement de l’image de profil original : $exception');
                                   },
                                 ),
                                 const SizedBox(width: 10),
@@ -434,6 +734,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                         width: double.infinity,
                                         height: 150,
                                         errorBuilder: (context, error, stackTrace) {
+                                          print('Error loading asset image: $error');
                                           return const Text(
                                             'Erreur lors du chargement de l’image',
                                             style: TextStyle(color: Colors.red),
@@ -446,6 +747,7 @@ class _ForumScreenState extends State<ForumScreen> {
                                         width: double.infinity,
                                         height: 150,
                                         errorBuilder: (context, error, stackTrace) {
+                                          print('Error loading file image: $error');
                                           return const Text(
                                             'Erreur lors du chargement de l’image',
                                             style: TextStyle(color: Colors.red),
@@ -457,9 +759,9 @@ class _ForumScreenState extends State<ForumScreen> {
                             if (post['audioPath'] != null) ...[
                               const SizedBox(height: 10),
                               ElevatedButton.icon(
-                                onPressed: () => _playAudio(post['audioPath']),
-                                icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow),
-                                label: Text(_isPlaying ? 'Arrêter' : 'Écouter le message vocal'),
+                                onPressed: () => _playAudio(index, post['audioPath']),
+                                icon: Icon((_isPlaying[index] ?? false) ? Icons.stop : Icons.play_arrow),
+                                label: Text((_isPlaying[index] ?? false) ? 'Arrêter' : 'Écouter le message vocal'),
                               ),
                             ],
                             const SizedBox(height: 10),
@@ -468,24 +770,41 @@ class _ForumScreenState extends State<ForumScreen> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.favorite_border, color: Colors.grey),
-                                    onPressed: () => _likePost(index),
+                                  Stack(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          (_isLiked[index] ?? false) ? Icons.favorite : Icons.favorite_border,
+                                          color: (_isLiked[index] ?? false) ? Colors.red : Colors.grey,
+                                        ),
+                                        onPressed: () => _likePost(index),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: Text(
+                                          post['likes'].toString(),
+                                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    post['likes'].toString(),
-                                    style: const TextStyle(color: Colors.grey),
+                                  Stack(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.comment, color: Colors.grey),
+                                        onPressed: () {},
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: Text(
+                                          post['comments'].toString(),
+                                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 5),
-                                  IconButton(
-                                    icon: const Icon(Icons.comment, color: Colors.grey),
-                                    onPressed: () {},
-                                  ),
-                                  Text(
-                                    post['comments'].toString(),
-                                    style: const TextStyle(color: Colors.grey),
-                                  ),
-                                  const SizedBox(width: 5),
                                   IconButton(
                                     icon: const Icon(Icons.repeat, color: Colors.grey),
                                     onPressed: () => _sharePost(index),
@@ -495,15 +814,14 @@ class _ForumScreenState extends State<ForumScreen> {
                                     post['shares'].toString(),
                                     style: const TextStyle(color: Colors.grey),
                                   ),
-                                  const SizedBox(width: 5),
                                   IconButton(
                                     icon: Icon(Icons.edit, color: AppColors.primaryColor),
-                                    onPressed: () {},
+                                    onPressed: () => _editPost(index),
                                     tooltip: 'Modifier',
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () {},
+                                    onPressed: () => _deletePost(index),
                                     tooltip: 'Supprimer',
                                   ),
                                 ],
@@ -542,9 +860,19 @@ class _ForumScreenState extends State<ForumScreen> {
                                   final comment = (post['commentList'] as List)[commentIndex];
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 5.0),
-                                    child: Text(
-                                      '${comment['username']}: ${comment['comment']}',
-                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${comment['username']}: ${comment['comment']}',
+                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.edit, color: AppColors.primaryColor, size: 16),
+                                          onPressed: () => _editComment(index, commentIndex),
+                                        ),
+                                      ],
                                     ),
                                   );
                                 },

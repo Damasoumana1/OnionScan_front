@@ -11,6 +11,20 @@ import 'package:onion_scan/features/diagnostic/screens/recommendations_screen.da
 import 'package:onion_scan/features/knowledge/screens/knowledge_screen.dart';
 import 'package:onion_scan/features/history/screens/history_screen.dart';
 import 'package:onion_scan/features/community/screens/forum_screen.dart';
+import 'package:onion_scan/features/notifications/screens/notifications_screen.dart';
+import 'package:onion_scan/features/settings/screens/settings_screen.dart';
+import 'package:onion_scan/features/settings/screens/profile_screen.dart';
+import 'package:onion_scan/features/settings/screens/language_connectivity_screen.dart';
+import 'package:onion_scan/features/settings/screens/drone_management_screen.dart';
+import 'package:onion_scan/features/settings/screens/notification_settings_screen.dart';
+import 'package:onion_scan/features/settings/screens/data_storage_screen.dart';
+import 'package:onion_scan/features/settings/screens/security_support_screen.dart';
+import 'package:onion_scan/features/settings/screens/terms_conditions_screen.dart';
+import 'package:onion_scan/features/settings/screens/about_us_screen.dart';
+import 'package:onion_scan/features/settings/screens/offline_diagnostic_screen.dart';
+import 'package:onion_scan/features/settings/screens/drone_management_screen.dart';
+
+
 
 class PlaceholderScreen extends StatelessWidget {
   final String label;
@@ -214,14 +228,72 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const AppScaffold(
-        child: PlaceholderScreen(label: 'Settings'),
+        child: SettingsScreen(),
         currentIndex: -1,
       ),
+      routes: [
+        GoRoute(
+          path: 'profile',
+          builder: (context, state) => const AppScaffold(
+            child: ProfileScreen(),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'language-connectivity',
+          builder: (context, state) => const AppScaffold(
+            child: LanguageConnectivityScreen(),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'drone-management',
+          builder: (context, state) => const AppScaffold(
+            child: DroneManagementScreen(),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'notification-settings',
+          builder: (context, state) => const AppScaffold(
+            child: PlaceholderScreen(label: 'Notification Settings'),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'data-storage',
+          builder: (context, state) => const AppScaffold(
+            child: PlaceholderScreen(label: 'data-storage'),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'security-support',
+          builder: (context, state) => const AppScaffold(
+            child: PlaceholderScreen(label: 'Security & Support'),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'terms-conditions',
+          builder: (context, state) => const AppScaffold(
+            child: PlaceholderScreen(label: 'Terms & Conditions'),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'about-us',
+          builder: (context, state) => const AppScaffold(
+            child: PlaceholderScreen(label: 'about-us'),
+            currentIndex: -1,
+          ),
+        ),
+      ],
     ),
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const AppScaffold(
-        child: PlaceholderScreen(label: 'Notifications'),
+        child: NotificationsScreen(),
         currentIndex: -1,
       ),
     ),
@@ -239,6 +311,14 @@ final GoRouter router = GoRouter(
         currentIndex: -1,
       ),
     ),
+    GoRoute(
+      path: '/offline-diagnostic',
+      builder: (context, state) => const AppScaffold(
+        child: OfflineDiagnosticScreen(),
+        currentIndex: -1,
+  ),
+    ),
+    
     GoRoute(
       path: '/knowledge-base',
       builder: (context, state) => const AppScaffold(
