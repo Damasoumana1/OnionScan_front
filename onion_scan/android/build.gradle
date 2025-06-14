@@ -2,6 +2,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://maven.dji.com/repository/' } // ← AJOUTE CETTE LIGNE
     }
 }
 

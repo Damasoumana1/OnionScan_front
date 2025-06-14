@@ -1,4 +1,17 @@
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+<!-- Permissions requises pour le DJI SDK -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+<uses-permission android:name="android.permission.BLUETOOTH" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+
+
 <uses-permission android:name="android.permission.CAMERA" />
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -6,7 +19,7 @@
 <!-- <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/> -->
     <application
-        android:label="onion_scan"
+        android:label="onionscan"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -33,6 +46,11 @@
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <!-- Clé API DJI -->
+        <meta-data
+            android:name="com.dji.sdk.API_KEY"
+            android:value="022690977d3983775bcda08e" /> <!-- Remplace TA_CLÉ_API_ICI par ta clé réelle -->
+        <!-- Meta-data Flutter -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
@@ -46,6 +64,12 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
     </queries>
 </manifest>

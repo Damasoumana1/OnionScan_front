@@ -129,6 +129,11 @@ class SettingsScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         ListTile(
+                          leading: const Icon(Icons.contact_support, color: AppColors.primaryColor),
+                          title: const Text('Support'),
+                          onTap: () => context.push('/settings/support'),
+                        ),
+                        ListTile(
                           leading: const Icon(Icons.description, color: AppColors.primaryColor),
                           title: const Text('Terms and Conditions'),
                           onTap: () => context.push('/settings/terms-conditions'),
@@ -138,6 +143,7 @@ class SettingsScreen extends StatelessWidget {
                           title: const Text('About Us'),
                           onTap: () => context.push('/settings/about-us'),
                         ),
+                        
                       ],
                     ),
                   ),

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.onion_scan"
+    namespace = "com.example.onionscan"
     // compileSdk = flutter.compileSdkVersion
     compileSdk 35
     ndkVersion = flutter.ndkVersion
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.onion_scan"
+        applicationId = "com.example.onionscan"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // minSdk = flutter.minSdkVersion
@@ -43,4 +43,17 @@ android {
 
 flutter {
     source = "../.."
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.dji.com/repository/' }
+}
+
+dependencies {
+    implementation 'com.dji:dji-sdk:4.18'
+    compileOnly 'com.dji:dji-sdk-provided:4.18'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4' // Ajoute cette ligne
+
+    
 }

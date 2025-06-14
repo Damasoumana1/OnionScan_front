@@ -1,37 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onion_scan/core/constants/colors.dart';
+import 'package:flutter/services.dart';
 
-// Classe simulée pour représenter les interactions avec le DJI Mobile SDK
 class DroneService {
+  static const platform = MethodChannel('com.onionscan/dji');
+
   static Future<void> initializeSDK() async {
-    // Simule l'initialisation du SDK
-    // Dans une implémentation réelle, utiliserait DjiFlutter.registerApp() ou équivalent
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      await platform.invokeMethod('initializeSDK');
+    } catch (e) {
+      print('Erreur lors de l\'initialisation du SDK : $e');
+    }
   }
 
   static Future<bool> connectDrone() async {
-    // Simule une connexion au drone
-    await Future.delayed(const Duration(seconds: 1));
-    return true; // À remplacer par une vraie connexion via le SDK
+    try {
+      return await platform.invokeMethod('connectDrone');
+    } catch (e) {
+      print('Erreur de connexion : $e');
+      return false;
+    }
   }
 
   static Future<bool> disconnectDrone() async {
-    // Simule une déconnexion
-    await Future.delayed(const Duration(seconds: 1));
-    return true; // À remplacer par une vraie déconnexion via le SDK
+    try {
+      return await platform.invokeMethod('disconnectDrone');
+    } catch (e) {
+      print('Erreur de déconnexion : $e');
+      return false;
+    }
   }
 
   static Future<bool> testConnection() async {
-    // Simule un test de connexion
-    await Future.delayed(const Duration(seconds: 1));
-    return true; // À remplacer par un vrai test via le SDK
+    try {
+      return await platform.invokeMethod('testConnection');
+    } catch (e) {
+      print('Erreur de test de connexion : $e');
+      return false;
+    }
   }
 
   static Future<String> getFirmwareVersion() async {
-    // Simule la récupération de la version du firmware
-    await Future.delayed(const Duration(seconds: 1));
-    return "01.04.0602"; // Dernière version connue pour Phantom 4
+    try {
+      return await platform.invokeMethod('getFirmwareVersion');
+    } catch (e) {
+      print('Erreur de récupération du firmware : $e');
+      return 'Unknown';
+    }
   }
 }
 
@@ -46,7 +62,7 @@ class _DroneManagementScreenState extends State<DroneManagementScreen> {
   bool _isDroneConnected = false;
   String _connectionMethod = 'Wi-Fi';
   String _selectedDrone = 'DJI Phantom 4';
-  String _firmwareVersion = '01.04.0602';
+  String _firmwareVersion = 'Unknown';
   final List<String> _availableDrones = [
     'DJI Phantom 4',
     'Mavic Pro',
@@ -61,7 +77,6 @@ class _DroneManagementScreenState extends State<DroneManagementScreen> {
 
   Future<void> _initializeDroneSDK() async {
     await DroneService.initializeSDK();
-    // Vérifie l'état initial de la connexion
     bool connected = await DroneService.testConnection();
     setState(() {
       _isDroneConnected = connected;
@@ -69,17 +84,23 @@ class _DroneManagementScreenState extends State<DroneManagementScreen> {
   }
 
   Future<void> _connectDrone() async {
-    bool success = await DroneService.connectDrone();
-    if (success) {
-      setState(() {
-        _isDroneConnected = true;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Drone connected successfully!')),
-      );
+    if (_connectionMethod == 'Wi-Fi') {
+      bool success = await DroneService.connectDrone();
+      if (success) {
+        setState(() {
+          _isDroneConnected = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Drone connected via Wi-Fi successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to connect to the drone via Wi-Fi.')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to connect to the drone.')),
+        const SnackBar(content: Text('Bluetooth not supported for this drone.')),
       );
     }
   }

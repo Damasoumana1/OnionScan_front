@@ -11,9 +11,14 @@ class WelcomeScreen extends StatelessWidget {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor,
-        leading: const Icon(
-          Icons.local_florist, // Placeholder pour le logo
-          color: Colors.white,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0), // optionnel pour ajuster la taille/position
+          child: Image.asset(
+            'assets/images/onion.png', // ← Mets ici le chemin de ton logo
+            height: 500, // ajuste la taille selon ton besoin
+            width: 500,
+            fit: BoxFit.contain,
+          ),
         ),
         title: const Text(
           'OnionScan',
@@ -144,3 +149,8 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 }
+
+// leading: const Icon(
+// Icons.local_florist, // Placeholder pour le logo
+// color: Colors.white,
+// ),

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:onion_scan/core/constants/colors.dart';
-
+// import '../services/auth_service.dart'; // Importation d'AuthService
+// import '../models/user.dart'; // Importation de la classe User
+import 'package:onion_scan/core/models/user.dart'; 
+import 'package:onion_scan/core/services/auth_service.dart'; // Importation d'AuthService
+// Importation de la classe User
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -289,8 +293,25 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        // TODO: Appeler AuthService pour inscription
-                        context.push('/login');
+                        final authService = AuthService();
+                        authService.signup(
+                          fullName: _fullName!,
+                          emailOrPhone: _emailOrPhone!,
+                          password: _password!,
+                          gender: _gender!,
+                          userType: _userType!,
+                          region: _region!,
+                          province: _province!,
+                          department: _department!,
+                          cityVillage: _cityVillage!,
+                        ).then((user) {
+                          if (user != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inscription réussie !')));
+                            context.push('/login');
+                          }
+                        }).catchError((e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur : $e')));
+                        });
                       }
                     },
                     child: const Text(

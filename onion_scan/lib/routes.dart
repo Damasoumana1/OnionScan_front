@@ -23,7 +23,9 @@ import 'package:onion_scan/features/settings/screens/terms_conditions_screen.dar
 import 'package:onion_scan/features/settings/screens/about_us_screen.dart';
 import 'package:onion_scan/features/settings/screens/offline_diagnostic_screen.dart';
 import 'package:onion_scan/features/settings/screens/drone_management_screen.dart';
-
+// import 'package:onion_scan/features/settings/screens/language_connectivity_screen.dart';
+import 'package:onion_scan/features/settings/screens/notification_settings_screen.dart';
+import 'package:onion_scan/features/settings/screens/support_screen.dart';
 
 
 class PlaceholderScreen extends StatelessWidget {
@@ -256,35 +258,42 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: 'notification-settings',
           builder: (context, state) => const AppScaffold(
-            child: PlaceholderScreen(label: 'Notification Settings'),
+            child: NotificationSettingsScreen(),
             currentIndex: -1,
           ),
         ),
         GoRoute(
           path: 'data-storage',
           builder: (context, state) => const AppScaffold(
-            child: PlaceholderScreen(label: 'data-storage'),
+            child: DataStorageScreen(),
             currentIndex: -1,
           ),
         ),
         GoRoute(
           path: 'security-support',
           builder: (context, state) => const AppScaffold(
-            child: PlaceholderScreen(label: 'Security & Support'),
+            child: SecuritySupportScreen(),
+            currentIndex: -1,
+          ),
+        ),
+        GoRoute(
+          path: 'support',
+          builder: (context, state) => const AppScaffold(
+            child: SupportScreen(),
             currentIndex: -1,
           ),
         ),
         GoRoute(
           path: 'terms-conditions',
           builder: (context, state) => const AppScaffold(
-            child: PlaceholderScreen(label: 'Terms & Conditions'),
+            child: TermsConditionsScreen(),
             currentIndex: -1,
           ),
         ),
         GoRoute(
           path: 'about-us',
           builder: (context, state) => const AppScaffold(
-            child: PlaceholderScreen(label: 'about-us'),
+            child: AboutScreen(),
             currentIndex: -1,
           ),
         ),
@@ -307,7 +316,7 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/about',
       builder: (context, state) => const AppScaffold(
-        child: PlaceholderScreen(label: 'About'),
+        child: AboutScreen(),
         currentIndex: -1,
       ),
     ),

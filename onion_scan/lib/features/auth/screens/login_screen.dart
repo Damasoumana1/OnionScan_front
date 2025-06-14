@@ -107,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context.push('/capture'); // Rediriger après connexion
                       }
                     },
+                    
                     child: const Text(
                       'Se connecter',
                       style: TextStyle(fontSize: 18),

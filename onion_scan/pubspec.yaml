@@ -53,6 +53,7 @@ dependencies:
   flutter_markdown: ^0.6.0 # Markdown pour termes/guides
   shared_preferences: ^2.2.0
   flutter_sound: ^9.2.13
+  font_awesome_flutter: ^10.7.0
   # dji: ^1.0.13 # DJI SDK pour drones
   
   
@@ -93,6 +94,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
         - assets/images/Home_screen.jpg
+        - assets/images/onion.png
+        - assets/images/Soumana Dama professional shot.jpg
         # - assets/images/sample_onion.jpg
 
         # - assets/translations/
